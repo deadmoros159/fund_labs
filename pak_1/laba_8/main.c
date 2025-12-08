@@ -53,14 +53,45 @@ int main()
 {
     int base;
     scanf("%d", &base);
+    if (base > 36 || base < 2 || isalpha(base))
+    {
+        fprintf(stderr, "Invalid input for base!\n");
+        return 1;
+    }
 
     char s[200];
     long long max_value = 0;
 
-    while (1) {
+    char all_nums[37] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9','A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J','K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T','U', 'V', 'W', 'X', 'Y', 'Z', '\0'};
+    char current_nums[base];
+    for (int i = 0; i < base; i++) current_nums[i] = all_nums[i];
+
+    while (1)
+    {
         scanf("%s", s);
-        if (strcmp(s, "Stop") == 0)
-            break;
+        char check_for_stop[100];
+        char* p = &s[0];
+        if (*p == 'S' && *(p+1) == 't' && *(p+2) == 'o' && *(p+3) == 'p') break;
+
+        for (; *p != '\0'; p++)
+        {
+            int correct_digit = 0;
+            for (int j = 0; j < strlen(current_nums); j++)
+            {
+                if (*p == current_nums[j])
+                {
+                    correct_digit = 1;
+                    break;
+                }
+            }
+            if (!correct_digit)
+            {
+                fprintf(stderr, "Number cannot contain digits higher than %d\n", base);
+                return 1;
+            }
+        }
+
+
 
         long long val = convert_to_decimal(s, base);
 
