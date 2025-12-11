@@ -69,10 +69,14 @@ int main()
     while (1)
     {
         scanf("%s", s);
-        char check_for_stop[100];
         char* p = &s[0];
         if (*p == 'S' && *(p+1) == 't' && *(p+2) == 'o' && *(p+3) == 'p') break;
-
+        if (strlen(s) > 20)
+        {
+            fprintf(stderr, "Overflow, input lower nums\n");
+            return 1;
+        }
+        
         for (; *p != '\0'; p++)
         {
             int correct_digit = 0;
@@ -94,13 +98,14 @@ int main()
 
 
         long long val = convert_to_decimal(s, base);
-
         if (llabs(val) > llabs(max_value)) {
             max_value = val;
         }
     }
+    char buffer_for_max_val[100];
+    convert_from_decimal(max_value, base, buffer_for_max_val);
 
-    printf("Max value in deciaml: %lld\n", max_value);
+    printf("Max value %s in deciaml: %lld\n", buffer_for_max_val ,max_value);
 
     int targets[] = {9, 18, 27, 36};
     char out[200];
