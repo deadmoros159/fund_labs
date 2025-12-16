@@ -1,38 +1,39 @@
 #include <stdio.h>
 
-void convert_base2r(int n, int r) {
-    int bits = r;
-    int base = 1 << r;
-    int mask = base - 1;
+void convert_base2r(int temp) {
 
-    char result[200];
-    int pos = 0;
+    for (int r = 1; r <= 5; r++)
+    {
+        int n = temp;
+        int bits = r;
+        int base = 1 << r;
+        int mask = base - 1;
 
-    do {
-        int digit = n & mask;
-        n >>= bits;
+        char result[200];
+        int pos = 0;
 
-        if (digit < 10)
-            result[pos++] = '0' + digit;
-        else
-            result[pos++] = 'A' + (digit - 10);
+        do {
+            int digit = n & mask;
+            n >>= bits;
 
-    } while (n != 0);
+            if (digit < 10)
+                result[pos++] = '0' + digit;
+            else
+                result[pos++] = 'A' + (digit - 10);
 
-    for (int i = pos - 1; i >= 0; i--)
-        putchar(result[i]);
+        } while (n != 0);
+
+        for (int i = pos - 1; i >= 0; i--)
+        {
+            printf("%c", result[i]);
+        }
+        printf("\n");
+    }
 }
 
 int main() {
-    int number = 12345;
-
-    printf("Число %d в различных основаниях:\n", number);
-
-    for (int r = 1; r <= 5; r++) {
-        printf("Основание 2^%d = %d : ", r, 1 << r);
-        convert_base2r(number, r);
-        printf("\n");
-    }
-
+    int number;
+    scanf("%d", &number);
+    convert_base2r(number);
     return 0;
 }
