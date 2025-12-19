@@ -1,39 +1,95 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
 
-void convert_base2r(int temp) {
+char digits[] = "0123456789ABCDEF";
 
-    for (int r = 1; r <= 5; r++)
+void convert_helper(unsigned int n, int bits, int mask) {
+    if ((n >> bits) != 0) {
+        convert_helper(n >> bits, bits, mask);
+    }
+    putchar(digits[n & mask]);
+}
+
+void convert_base2r(int n) {
+    unsigned int un = (unsigned int)n;
+    
+    if (n == 0) {
+        printf("0\n0\n0\n0\n0\n");
+        return;
+    }
+    
+    // r = 1
     {
-        int n = temp;
-        int bits = r;
-        int base = 1 << r;
-        int mask = base - 1;
-
-        char result[200];
-        int pos = 0;
-
-        do {
-            int digit = n & mask;
-            n >>= bits;
-
-            if (digit < 10)
-                result[pos++] = '0' + digit;
-            else
-                result[pos++] = 'A' + (digit - 10);
-
-        } while (n != 0);
-
-        for (int i = pos - 1; i >= 0; i--)
-        {
-            printf("%c", result[i]);
-        }
-        printf("\n");
+        int bits = 1;
+        int mask = (1 << bits) - 1;
+        if (un >> bits) convert_helper(un >> bits, bits, mask);
+        putchar(digits[un & mask]);
+        putchar('\n');
+    }
+    
+    // r = 2
+    {
+        int bits = 2;
+        int mask = (1 << bits) - 1;
+        if (un >> bits) convert_helper(un >> bits, bits, mask);
+        putchar(digits[un & mask]);
+        putchar('\n');
+    }
+    
+    // r = 3
+    {
+        int bits = 3;
+        int mask = (1 << bits) - 1;
+        if (un >> bits) convert_helper(un >> bits, bits, mask);
+        putchar(digits[un & mask]);
+        putchar('\n');
+    }
+    
+    // r = 4
+    {
+        int bits = 4;
+        int mask = (1 << bits) - 1;
+        if (un >> bits) convert_helper(un >> bits, bits, mask);
+        putchar(digits[un & mask]);
+        putchar('\n');
+    }
+    
+    // r = 5
+    {
+        int bits = 5;
+        int mask = (1 << bits) - 1;
+        if (un >> bits) convert_helper(un >> bits, bits, mask);
+        putchar(digits[un & mask]);
+        putchar('\n');
     }
 }
 
 int main() {
-    int number;
-    scanf("%d", &number);
-    convert_base2r(number);
+    char input[100];
+    long number;
+    char *endptr;
+    
+    printf("Введите целое число: ");
+    
+    if (fgets(input, sizeof(input), stdin) == NULL) {
+        fprintf(stderr, "Invalid input\n");
+        return 1;
+    }
+
+    number = strtol(input, &endptr, 10);
+
+    if (endptr == input) {
+        fprintf(stderr, "Invalid number\n");
+        return 1;
+    }
+
+    if (number > INT_MAX || number < INT_MIN) {
+        fprintf(stderr, "Overflow\n");
+        return 1;
+    }
+    
+    convert_base2r((int)number);
+    
     return 0;
 }
