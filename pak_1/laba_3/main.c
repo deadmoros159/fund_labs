@@ -3,268 +3,241 @@
 #include <stdlib.h>
 #include <math.h>
 #include <ctype.h>
-#define MAX_INT     1000000
 
+#define MAX_INT 1000000
 
-void is_uravnenie(float epsilon, float a, float b, float c)
-{
+static float g_sort_epsilon;
 
-    float D = b*b - 4*a*c;
-    if (D < epsilon && D < 0)
-    {
-        printf("Error: Has imaginary solution for a = %f, b = %f, c = %f\n", a, b, c);
-        return;
+int is_number(const char *str) {
+    if (*str == '-' || *str == '+') str++;
+    
+    int has_digit = 0;
+    int has_dot = 0;
+    
+    while (*str) {
+        if (isdigit(*str)) {
+            has_digit = 1;
+        } else if (*str == '.') {
+            if (has_dot) return 0;
+            has_dot = 1;
+        } else {
+            return 0;
+        }
+        str++;
     }
-    if (D == epsilon)
-    {
-        printf("Has one solution for a = %f, b = %f, c = %f: x = %f\n", ((-b) / (4*a)), a, b, c);
-        return;
-    }
-    float x1 = (-b + sqrt(D)) / (2*a);
-    float x2 = (-b - sqrt(D)) / (2*a);
-    if (fabs(x1 -x2) < epsilon)
-    {
-        printf("Has one solution for a = %f, b = %f, c = %f: x = %f\n", a, b, c, x1);
-        return;
-    }
-    printf("Has two solutions for a = %f, b = %f, c = %f: x1 = %f , x2 = %f\n", a, b, c, x1 ,x2);
-    return;
+    return has_digit;
 }
 
-void all_permutations(float eps_q, float a_q, float b_q, float c_q)
-{
-    if (a_q == 0.0 && b_q == 0.00 && c_q == 0.0)
-    {
-        printf("Infinity solutions\n");
+int float_compare(const void *a, const void *b) {
+    float fa = *(const float*)a;
+    float fb = *(const float*)b;
+    
+    if (fabs(fa - fb) < g_sort_epsilon) {
+        return 0;
+    }
+    return (fa > fb) ? 1 : -1;
+}
+
+int compare_floats(float a, float b, float epsilon) {
+    return fabs(a - b) < epsilon;
+}
+
+void solve_equation(float epsilon, float a, float b, float c) {
+    if (fabs(a) < epsilon) {
+        if (fabs(b) < epsilon) {
+            if (fabs(c) < epsilon) {
+                printf("For a=%g, b=%g, c=%g: Infinite solutions\n", a, b, c);
+            } else {
+                printf("For a=%g, b=%g, c=%g: No solutions\n", a, b, c);
+            }
+        } else {
+            float x = -c / b;
+            printf("For a=%g, b=%g, c=%g: One linear solution x=%g\n", a, b, c, x);
+        }
         return;
     }
-
-
-
-    is_uravnenie(eps_q, a_q, b_q ,c_q);
-    is_uravnenie(eps_q, a_q, c_q ,b_q);
-    is_uravnenie(eps_q, b_q, a_q ,c_q);
-    is_uravnenie(eps_q, b_q, c_q ,a_q);
-    is_uravnenie(eps_q, c_q, a_q ,b_q);
-    is_uravnenie(eps_q, c_q, b_q ,a_q);
-}
-
-int comp(const void *a, const void *b) 
-{
-    return (*(int *)a - *(int *)b); 
-} 
-
-int is_triangle(float epsilon, float a, float b, float c)
-{
-    float arr[] = {a, b, c};
-    qsort(arr, 3, sizeof(arr[0]), comp);
-    float is_90 = arr[2]*arr[2] - (arr[1]*arr[1] + arr[0]*arr[0]);
-    if (fabs(is_90) < epsilon) return 1;
-    return 0;
-}
-
-int is_kratno(int x1, int x2)
-{
-    if (x1 == 0 || x2 == 0) return 0;
-    if (x1 % x2 == 0)
-    {
-        return 1;
+    
+    float D = b * b - 4 * a * c;
+    
+    if (D < -epsilon) {
+        printf("For a=%g, b=%g, c=%g: No real solutions (D=%g)\n", a, b, c, D);
+    } else if (fabs(D) < epsilon) {
+        float x = -b / (2 * a);
+        printf("For a=%g, b=%g, c=%g: One solution x=%g\n", a, b, c, x);
+    } else {
+        float sqrtD = sqrt(D);
+        float x1 = (-b + sqrtD) / (2 * a);
+        float x2 = (-b - sqrtD) / (2 * a);
+        
+        if (fabs(x1 - x2) < epsilon) {
+            printf("For a=%g, b=%g, c=%g: One solution x=%g\n", a, b, c, x1);
+        } else {
+            printf("For a=%g, b=%g, c=%g: Two solutions x1=%g, x2=%g\n", a, b, c, x1, x2);
+        }
     }
-    return 0;
 }
 
-
-int main(int argc, char *argv[])
-{
-    char* flag = argv[1];
-    if (*flag != '-' && *flag != '/')
-    {
-        printf("Invalid initialization flag\n");
-        return 1;
-    }
-    flag++;
-    switch (*flag)
-    {
-    case 'm':
-        if (argc != 4)
-        {
-            fprintf(stderr, "Invalid amount of variables!\n");
-            return 1;
-        }
-        char* m_p_argv_1 = argv[2];
-        int m_is_argv_1_number = 1;
-        for (int i = 0; i < strlen(argv[2]); i++)
-        {
-            if (isalpha(*m_p_argv_1))
-            {
-                m_is_argv_1_number = 0;
-                fprintf(stderr, "Only numbers!\n");
-                return 1;
+void process_all_permutations(float eps, float a, float b, float c) {
+    printf("Processing all permutations with epsilon=%g:\n", eps);
+    
+    float coeffs[6][3] = {
+        {a, b, c}, {a, c, b},
+        {b, a, c}, {b, c, a},
+        {c, a, b}, {c, b, a}
+    };
+    
+    int printed[6] = {0};
+    
+    for (int i = 0; i < 6; i++) {
+        if (printed[i]) continue;
+        
+        for (int j = i + 1; j < 6; j++) {
+            if (compare_floats(coeffs[i][0], coeffs[j][0], eps) &&
+                compare_floats(coeffs[i][1], coeffs[j][1], eps) &&
+                compare_floats(coeffs[i][2], coeffs[j][2], eps)) {
+                printed[j] = 1;
             }
-            m_p_argv_1++;
-        }
-        char* m_p_argv_2 = argv[3];
-        int m_is_argv_2_number = 1;
-        for (int i = 0; i < strlen(argv[3]); i++)
-        {
-            if (isalpha(*m_p_argv_2))
-            {
-                m_is_argv_2_number = 0;
-                fprintf(stderr, "Only numbers!\n");
-                return 1;
-            }
-            m_p_argv_2++;
-        }
-        int a = atoi(argv[2]);
-        int b = atoi(argv[3]);
-        if (a > MAX_INT || b > MAX_INT)
-        {
-            fprintf(stderr, "Input lower number!\n");
-            return 1;
-        }
-        if (is_kratno(a, b)) printf("%d is multiple to %d\n", a, b);
-        else printf("%d is NOT multiple to %d\n", a, b);
-        break;
-    case 't':
-        if (argc != 6)
-        {
-            fprintf(stderr, "Invalid amount of variables!\n");
-            return 1;
-        }
-        char* t_p_argv_1 = argv[2];
-        int t_is_argv_1_number = 1;
-        for (int i = 0; i < strlen(argv[2]); i++)
-        {
-            if (isalpha(*t_p_argv_1))
-            {
-                t_is_argv_1_number = 0;
-                fprintf(stderr, "Only numbers!\n");
-                return 1;
-            }
-            t_p_argv_1++;
-        }
-        char* t_p_argv_2 = argv[3];
-        int t_is_argv_2_number = 1;
-        for (int i = 0; i < strlen(argv[3]); i++)
-        {
-            if (isalpha(*t_p_argv_2))
-            {
-                t_is_argv_2_number = 0;
-                fprintf(stderr, "Only numbers!\n");
-                return 1;
-            }
-            t_p_argv_2++;
-        }
-
-        char* t_p_argv_3 = argv[4];
-        int t_is_argv_3_number = 1;
-        for (int i = 0; i < strlen(argv[4]); i++)
-        {
-            if (isalpha(*t_p_argv_3))
-            {
-                t_is_argv_3_number = 0;
-                fprintf(stderr, "Only numbers!\n");
-                return 1;
-            }
-            t_p_argv_3++;
-        }
-        char* t_p_argv_4 = argv[5];
-        int t_is_argv_4_number = 1;
-        for (int i = 0; i < strlen(argv[5]); i++)
-        {
-            if (isalpha(*t_p_argv_4))
-            {
-                t_is_argv_4_number = 0;
-                fprintf(stderr, "Only numbers!\n");
-                return 1;
-            }
-            t_p_argv_4++;
-        }
-        float eps_t = atof(argv[2]);
-        float x1 = atof(argv[3]);
-        float x2 = atof(argv[4]);
-        float x3 = atof(argv[5]);
-        if (x1 > MAX_INT || x2 > MAX_INT || x3 > MAX_INT)
-        {
-            fprintf(stderr, "Input lower number!\n");
-            return 1;
-        }
-        if (is_triangle(eps_t, x1, x2, x3))
-        {
-            printf("You can make triangel\n");
-        }
-        else printf("You can NOT make triangel\n");
-        break;
-    case 'q':
-        if (argc != 6)
-        {
-            fprintf(stderr, "Invalid amount of variables!\n");
-            return 1;
-        }
-        char* q_p_argv_1 = argv[2];
-        int q_is_argv_1_number = 1;
-        for (int i = 0; i < strlen(argv[2]); i++)
-        {
-            if (isalpha(*q_p_argv_1))
-            {
-                q_is_argv_1_number = 0;
-                fprintf(stderr, "Only numbers!\n");
-                return 1;
-            }
-            q_p_argv_1++;
-        }
-        char* q_p_argv_2 = argv[3];
-        int q_is_argv_2_number = 1;
-        for (int i = 0; i < strlen(argv[3]); i++)
-        {
-            if (isalpha(*q_p_argv_2))
-            {
-                q_is_argv_2_number = 0;
-                fprintf(stderr, "Only numbers!\n");
-                return 1;
-            }
-            q_p_argv_2++;
-        }
-
-        char* q_p_argv_3 = argv[4];
-        int q_is_argv_3_number = 1;
-        for (int i = 0; i < strlen(argv[4]); i++)
-        {
-            if (isalpha(*q_p_argv_3))
-            {
-                q_is_argv_3_number = 0;
-                fprintf(stderr, "Only numbers!\n");
-                return 1;
-            }
-            q_p_argv_3++;
-        }
-        char* q_p_argv_4 = argv[5];
-        int q_is_argv_4_number = 1;
-        for (int i = 0; i < strlen(argv[5]); i++)
-        {
-            if (isalpha(*q_p_argv_4))
-            {
-                q_is_argv_4_number = 0;
-                fprintf(stderr, "Only numbers!\n");
-                return 1;
-            }
-            q_p_argv_4++;
         }
         
-        float eps_q = atof(argv[2]);
-        float a_q = atof(argv[3]);
-        float b_q = atof(argv[4]);
-        float c_q = atof(argv[5]);
-        if (a_q > MAX_INT || b_q > MAX_INT || c_q > MAX_INT)
-        {
-            fprintf(stderr, "Input lower number!\n");
-            return 1;
+        if (!printed[i]) {
+            solve_equation(eps, coeffs[i][0], coeffs[i][1], coeffs[i][2]);
         }
-        all_permutations(eps_q, a_q, b_q ,c_q);
-        break;
-    default:
-    printf("Invalid flag\n");
-        break;
     }
+}
+
+int is_right_triangle(float epsilon, float a, float b, float c) {
+    if (a <= 0 || b <= 0 || c <= 0) return 0;
+    
+    g_sort_epsilon = epsilon;
+    
+    float sides[3] = {a, b, c};
+    qsort(sides, 3, sizeof(float), float_compare);
+    
+    float diff = fabs(sides[2] * sides[2] - (sides[1] * sides[1] + sides[0] * sides[0]));
+    return diff < epsilon;
+}
+
+int is_multiple(int x1, int x2) {
+    if (x1 == 0 || x2 == 0) {
+        fprintf(stderr, "Numbers must be non-zero\n");
+        return 0;
+    }
+    return (x1 % x2 == 0);
+}
+
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        fprintf(stderr, "Invalid usage\n");
+        return 1;
+    }
+    
+    char *flag = argv[1];
+    if ((flag[0] != '-' && flag[0] != '/') || flag[1] == '\0') {
+        fprintf(stderr, "Invalid flag format\n");
+        return 1;
+    }
+    
+    char flag_char = flag[1];
+    
+    switch (flag_char) {
+        case 'm': {
+            if (argc != 4) {
+                fprintf(stderr, "Usage: %s -m int int\n", argv[0]);
+                return 1;
+            }
+            
+            for (int i = 2; i < 4; i++) {
+                char* endptr;
+                long val = strtol(argv[i], &endptr, 10);
+                if (*endptr != '\0' || argv[i][0] == '\0') {
+                    fprintf(stderr, "Number is not a integer\n");
+                    return 1;
+                }
+                if (val == 0) {
+                    fprintf(stderr, "Numbers cannot be zeros\n");
+                    return 1;
+                }
+            }
+            
+            int a = atoi(argv[2]);
+            int b = atoi(argv[3]);
+            
+            if (is_multiple(a, b)) {
+                printf("%d is multiple of %d\n", a, b);
+            } else {
+                printf("%d is NOT multiple of %d\n", a, b);
+            }
+            break;
+        }
+        
+        case 't': {
+            if (argc != 6) {
+                fprintf(stderr, "Usage: %s -t epsilon float float float\n", argv[0]);
+                return 1;
+            }
+            
+            for (int i = 2; i < 6; i++) {
+                if (!is_number(argv[i])) {
+                    fprintf(stderr, "Argument is not a number\n");
+                    return 1;
+                }
+            }
+            
+            float epsilon = atof(argv[2]);
+            if (epsilon <= 0) {
+                fprintf(stderr, "Epsilon must be positive\n");
+                return 1;
+            }
+            
+            float sides[3];
+            for (int i = 0; i < 3; i++) {
+                sides[i] = atof(argv[3 + i]);
+                if (sides[i] <= 0) {
+                    printf("Must be positive numbers\n");
+                    return 1;
+                }
+            }
+            
+            if (is_right_triangle(epsilon, sides[0], sides[1], sides[2])) {
+                printf("The numbers can form a right triangle\n");
+            } else {
+                printf("The numbers CANNOT form a right triangle\n");
+            }
+            break;
+        }
+        
+        case 'q': {
+            if (argc != 6) {
+                fprintf(stderr, "Usage: %s -q epsilon float float float\n", argv[0]);
+                return 1;
+            }
+            
+            for (int i = 2; i < 6; i++) {
+                if (!is_number(argv[i])) {
+                    fprintf(stderr, "Argument is not a number\n");
+                    return 1;
+                }
+            }
+            
+            float epsilon = atof(argv[2]);
+            if (epsilon <= 0) {
+                fprintf(stderr, "Epsilon must be positive\n");
+                return 1;
+            }
+            
+            float coeffs[3];
+            for (int i = 0; i < 3; i++) {
+                coeffs[i] = atof(argv[3 + i]);
+            }
+            
+            process_all_permutations(epsilon, coeffs[0], coeffs[1], coeffs[2]);
+            break;
+        }
+        
+        default:
+            fprintf(stderr, "Unknown flag: \n");
+            return 1;
+    }
+    
     return 0;
 }
