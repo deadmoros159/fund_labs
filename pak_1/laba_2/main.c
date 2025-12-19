@@ -2,11 +2,12 @@
 #include <math.h>
 #include <stdlib.h>
 #include <ctype.h>
-#define MAX 500000
+#include <string.h>
+#define MAX_N 1000000
 
 int is_prime(int x)
 {
-    for (int i = 2; i < x / 2; i++)
+    for (int i = 2; i * i <= x; i++)
     {
         if (x % i == 0)
         {
@@ -20,12 +21,12 @@ void eratosfen(int* chisla, int size)
 {
     int* p = &chisla[0];
     
-    int right = pow(MAX, 0.5) + 1;
-    int arr[MAX];
+    int right = pow(MAX_N, 0.5) + 1;
+    int arr[MAX_N];
     arr[0] = 0;
     arr[1] = 0;
 
-    for (int i = 2; i <= MAX; i++)
+    for (int i = 2; i <= MAX_N; i++)
     {
         arr[i] = i;
     }
@@ -34,7 +35,7 @@ void eratosfen(int* chisla, int size)
     {
         if (is_prime(i))
         {
-            for (int j = i + 1; j <= MAX; j++)
+            for (int j = i + 1; j <= MAX_N; j++)
             {
                 if (arr[j] % i == 0){
                     arr[j] = 0;
@@ -43,10 +44,10 @@ void eratosfen(int* chisla, int size)
         }
     }
 
-    int arr_simple[MAX];
+    int arr_simple[MAX_N];
     int size_arr_simple = 1;
 
-    for (int i = 0; i < MAX; i++)
+    for (int i = 0; i < MAX_N; i++)
     {
         if (arr[i] != 0)
         {
@@ -54,64 +55,85 @@ void eratosfen(int* chisla, int size)
             size_arr_simple++;
         }
     }
-    // for (int i = 0; i < 10; i++) printf("%d ", arr_simple[i]);
     for (int i = 0; i < size; i++)
     {
         printf("%d\n", arr_simple[*p++]);
     }
 }
 
+int read_number_with_leading_zeros() {
+    char input[256];
+    
+    if (fgets(input, sizeof(input), stdin) == NULL) {
+        return -1;
+    }
+    input[strcspn(input, "\n")] = '\0';
+
+    for (int i = 0; input[i] != '\0'; i++) {
+        if (!isdigit(input[i])) {
+            return -1;  // Некорректный ввод
+        }
+    }
+
+    int start = 0;
+    while (input[start] == '0' && input[start + 1] != '\0') {
+        start++;
+    }
+    if (input[start] == '\0') {
+        return 0;
+    }
+    int len = strlen(input + start);
+    if (len > 10) {
+        return -2;  // Слишком длинное число
+    }
+    if (len == 10) {
+        const char* max_int_str = "2147483647";
+        for (int i = 0; i < 10; i++) {
+            if (input[start + i] > max_int_str[i]) {
+                return -2;
+            } else if (input[start + i] < max_int_str[i]) {
+                break;
+            }
+        }
+    }
+    return atoi(input);
+}
+
+
 int main()
 {
-    char k[100];
-    fgets(k, sizeof(k), stdin);
-    int size_k = 0;
+    printf("Введите количество порядковых номеров простых чисел: ");
+    int K = read_number_with_leading_zeros();
 
-    for (int i = 0; k[i] != '\0'; i++)
-    {
-        if (size_k > 10)
-        {
-            fprintf(stderr, "Input smaller number\n");
-            return 1;
+    if (K <= 0) {
+        if (K == 0) {
+            fprintf(stderr, "Число запросов должно быть положительным\n");
+        } else if (K == -1) {
+            fprintf(stderr, "Ошибка: введите положительное число\n");
+        } else if (K == -2) {
+            fprintf(stderr, "Слишком большое число\n");
         }
-        size_k++;
-        if (isalpha(k[i]))
-        {
-            fprintf(stderr, "number cannot contain alpha\n");
-            return 1;
-        }
+        return 1;
     }
-    int a = atoi(k);
+    int* raspred = malloc(sizeof(int) * K);
 
-    int* raspred = malloc(sizeof(int) * a);
-
-    for (int i = 0; i < a; i++)
+    for (int i = 0; i < K; i++)
     {
-        
-
-        char temp[100];
-        fgets(temp, sizeof(temp), stdin);
-        int size_temp = 0;
-
-        for (int i = 0; temp[i] != '\0'; i++)
-        {
-            if (size_temp > 10)
-            {
-                fprintf(stderr, "Input smaller number\n");
-                return 1;
+        int res = read_number_with_leading_zeros();
+        if (res <= 0) {
+            if (res == 0) {
+                fprintf(stderr, "Число должно быть положительным\n");
+            } else if (res == -1) {
+                fprintf(stderr, "Ошибка: введите положительное число\n");
+            } else if (res == -2) {
+                fprintf(stderr, "Слишком большое число\n");
             }
-            size_temp++;
-            if (isalpha(temp[i]))
-            {
-                fprintf(stderr, "number cannot contain alpha\n");
-                return 1;
-            }
+            return 1;
         }
-        int res = atoi(temp);
         raspred[i] = res;
     }
-
-    eratosfen(raspred, a);
+    printf("Результаты:\n");
+    eratosfen(raspred, K);
     free(raspred);
     return 0;
 }
