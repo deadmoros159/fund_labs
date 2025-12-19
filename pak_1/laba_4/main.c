@@ -30,7 +30,6 @@ double log_factorial(int n) {
     return sum;
 }
 
-// e
 double e_limit(double epsilon)
 {
     double n = 1;
@@ -72,7 +71,6 @@ double e_uravnenie(double epsilon)
     return (x_low + x_high) / 2.0;
 }
 
-// Pi
 double pi_limit(double epsilon)
 {
     int n = 1;
@@ -198,99 +196,104 @@ double sqrt2_uravnenie(double epsilon)
     return (x_low + x_high) / 2.0;
 }
 
-// double gamma_limit(double epsilon)
-// {
-//     double m = 1.0;
-//     double prev = 0.0;
-//     double current;
+double gamma_limit(double epsilon) {
+    double H_n = 1.0;
+    double prev = 0.0;
+    double gamma = 1.0 - log(1.0);
     
-//     do {
-//         prev = current;
-//         current = 0.0;
+    for (int n = 2; n <= MAX_ITERS; n++) {
+        H_n += 1.0 / n;
+        double new_gamma = H_n - log(n);
         
-//         for (int k = 1; k <= m; k++) {
-//             double comb = sochetanie(m, k);
-//             current += comb * pow(-1, k) / k * log_factorial(k);
-//         }
+        if (fabs(new_gamma - gamma) < epsilon && n > 10) {
+            return new_gamma;
+        }
+        gamma = new_gamma;
+    }
+    return gamma;
+}
+
+double gamma_series(double epsilon) {
+    double sum = 0.0;
+    double term;
+    int n = 2;
+    
+    double prev_sum = 0.0;
+    do {
+        double zeta = 0.0;
+        int m_terms = 100;
+        for (int m = 1; m <= m_terms; m++) {
+            zeta += 1.0 / pow(m, n);
+        }
         
-//         m++;
-//     } while (fabs(current - prev) > epsilon && m < MAX_ITERS);
-//     return current;
-// }
-
-// double gamma_series(double epsilon) {
-//     double pi_val = pi_series(epsilon/10);
-//     double sum = -pi_val*pi_val/6.0;
+        term = (pow(-1.0, n) * (zeta - 1)) / n;
+        sum += term;
+        n++;
+        
+        if (n > 100) break;
+    } while (fabs(sum - prev_sum) > epsilon);
     
-//     int k = 2;
-//     double term;
-    
-//     do {
-//         double floor_k = floor(k);
-//         term = 1.0/(floor_k*floor_k) - 1.0/k;
-//         sum += term;
-//         k++;
-//     } while (fabs(term) > epsilon && k < MAX_ITERS);
-    
-//     return sum;
-// }
-// ////
+    return 1.0 - sum;
+}
 
-// long double gamma_limits(int m) {
-//     long double sum = 0.0L;
-//     long double C = 1.0L; /* C(m,0) = 1, но суммируем с k=1 */
-//     for (int k = 1; k <= m; ++k) {
-//         /* обновляем биномиальный коэффициент C = C(m,k) */
-//         C = C * (long double)(m - k + 1) / (long double)k;
-//         /* ln(k!) вычислим через lgamma: ln(k!) = lgamma(k+1) */
-//         long double lnfact = lgamma((long double)k + 1.0L);
-//         long double term = ((k % 2) ? -1.0L : 1.0L) * C * (lnfact / (long double)k);
-//         sum += term;
-//     }
-//     return sum;
-// }
-
-// /* 2) Сумма вида: -pi^2/6 + sum_{k=2..N} (1/floor(sqrt(k))^2 - 1/k) */
-// long double gamma_series_test(long long N) {
-//     long double sum = 0.0L;
-//     for (long long k = 2; k <= N; ++k) {
-//         long long r = (long long)floor(sqrt((long double)k));
-//         if (r < 1) r = 1;
-//         long double a = 1.0L / ((long double)r * (long double)r); /* 1/(floor(sqrt(k)))^2 */
-//         long double b = 1.0L / (long double)k;
-//         sum += (a - b);
-//     }
-//     double PI = pi_limit(1e-10);
-//     long double val = - (PI * PI) / 6.0L + sum;
-//     return val;
-// }
+double gamma_uravnenie(double epsilon) {
+    double left = 0.5;
+    double right = 0.6;
+    double mid;
+    
+    for (int iter = 0; iter < 100; iter++) {
+        mid = (left + right) / 2.0;
+        
+        double n = 1000.0;
+        double product = 1.0;
+        
+        for (int k = 2; k <= n; k++) {
+            product *= k / (k - 1.0);
+        }
+        
+        double left_side = exp(-mid);
+        double right_side = (log(n) / n) * product;
+        
+        if (left_side > right_side) {
+            left = mid;
+        } else {
+            right = mid;
+        }
+        
+        if (right - left < epsilon) {
+            break;
+        }
+    }
+    
+    return (left + right) / 2.0;
+}
 
 int main(int argc, char const *argv[])
 {
-    double x = e_limit(1e-10);
     printf("=====Test for e=====\n");
     printf("Test for limit: %.15f\n", e_limit(1e-10));
     printf("Test for series: %.15f\n", e_series(1e-10));
     printf("Test for uravnenie: %.15f\n", e_uravnenie(1e-10));
 
-    printf("=====Test for pi=====\n");
+    printf("\n=====Test for pi=====\n");
     printf("Test for limit: %.15f\n", pi_limit(1e-10));
     printf("Test for series: %.15f\n", pi_series(1e-10));
     printf("Test for uravnenie: %.15f\n", pi_uravnenie(1e-10));
 
-    printf("=====Test for ln2=====\n");
+    printf("\n=====Test for ln2=====\n");
     printf("Test for limit: %.15f\n", ln2_limit(1e-10));
     printf("Test for series: %.15f\n", ln2_series(1e-10));
     printf("Test for uravnenie: %.15f\n", ln2_uravnenie(1e-10));
 
-    printf("=====Test for sqrt2=====\n");
+    printf("\n=====Test for sqrt2=====\n");
     printf("Test for limit: %.15f\n", sqrt2_limit(1e-10));
     printf("Test for series: %.15f\n", sqrt2_series(1e-10));
     printf("Test for uravnenie: %.15f\n", sqrt2_uravnenie(1e-10));
 
-    // printf("=====Test for gamma=====\n");
-    // printf("Test for limit: %.15Lg\n", gamma_limits(1e-10));
-    // printf("Test for series: %.15Lg\n", gamma_series_test(1e-10));
-    // printf("Test for uravnenie: %.15Lg\n", sqrt2_uravnenie(1e-10));
+    printf("\n=====Test for gamma=====\n");
+    printf("Test for limit: %.15f\n", gamma_limit(1e-8));
+    printf("Test for series: %.15f\n", gamma_series(1e-8));
+    printf("Test for uravnenie: %.15f\n", gamma_uravnenie(1e-8));
+    
     return 0;
 }
