@@ -66,7 +66,7 @@ void convert_base2r(int n) {
 }
 
 int main() {
-    char input[100];
+    char input[256];
     long number;
     char *endptr;
     
